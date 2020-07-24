@@ -19,9 +19,10 @@ class Screen():
 		#font
 		pygame.font.init() 
 		self.fontSize = 35
-		self.font = pygame.font.SysFont("Italic", self.fontSize)
+		self.font = pygame.font.SysFont("Ubuntu Mono", self.fontSize)
 		#traceList
 		self.tracesList = []
+		self.tracesColor = {}
 
 	#draw background color with border
 	def drawBackground(self):
@@ -37,7 +38,7 @@ class Screen():
 
 	#draw hero on heros position
 	def drawHero(self, hero):
-		pygame.draw.circle(self.screen, self.orange, hero, 7)
+		pygame.draw.circle(self.screen, self.orange, (hero.x,hero.y), 7)
 
 	#draw all houses. First and last have difrent color
 	def drawHouses(self, houses):
@@ -48,7 +49,7 @@ class Screen():
 		for i in range(1, len(houses) - 1):
 			self.drawHouse(houses[i][0], houses[i][1], i)
 		#last
-		self.cDrawHouse(houses[len(houses) - 1][0], houses[len(houses) - 1][1], self.green, len(houses) - 1)
+		self.cDrawHouse(houses[len(houses) - 1][0], houses[len(houses) - 1][1], self.red, len(houses) - 1)
 
 	def drawHouse(self, x, y, number):
 		color = self.black
@@ -61,7 +62,10 @@ class Screen():
 		pygame.draw.rect(self.screen, color, (x - 30, y - 12, 60, 35))
 
 		#render house number
-		self.screen.blit(self.font.render(str(number), False, self.orange),(x - int(self.fontSize / 5),y - int(self.fontSize / 5)))
+		text = self.font.render(str(number), False, self.orange)
+		center = x - (text.get_width() / 2)
+		top = y - (text.get_height() / 2)
+		self.screen.blit(text,(int(center), int(top)))
 
 	def cDrawHouse(self, x, y, color, number):
 		#draw roof
@@ -73,18 +77,30 @@ class Screen():
 		pygame.draw.rect(self.screen, color, (x - 30, y - 12, 60, 35))
 
 		#render house number
-		self.screen.blit(self.font.render(str(number), False, self.orange),(x - int(self.fontSize / 5),y - int(self.fontSize / 5)))
+		text = self.font.render(str(number), False, self.orange)
+		center = x - (text.get_width() / 2)
+		top = y - (text.get_height() / 2)
+		self.screen.blit(text,(int(center), int(top)))
 
 	def drawAllTraces(self):
 		for trace in self.tracesList:
 			self.drawTrace(trace)
 
 	def drawTrace(self, houses):
-		#random color
-		color = pygame.Color(randint(0,255), randint(0,255), randint(0,255));
-		pygame.draw.lines(self.screen, color, False, houses, 3)
+		size = 7
+
+		#create new trace if not in traceList
 		if houses not in self.tracesList:
+			#random color
+			color = pygame.Color(randint(75,150), randint(0,175), randint(0,200));
+			pygame.draw.lines(self.screen, color, False, houses, size)
+			#add new trace in list and save new color. New trace -> new color 
 			self.tracesList.append(houses)
+			self.tracesColor[str(len(self.tracesList) - 1)] = color
+		else:
+			#get color if trace already exist in list
+			color = self.tracesColor[str(self.tracesList.index(houses))]
+			pygame.draw.lines(self.screen, color, False, houses, size)
 
 	def calcDistance(self, first, second):
 		return math.sqrt(math.pow((first[0] - second[0]),2) + math.pow((first[1] - second[1]),2))
@@ -137,6 +153,29 @@ class Screen():
 				distances["1"]["0"] = self.calcDistance(houses[1], houses[0])
 
 		return [houses, distances]
+
+	def showAndWait(self, message):
+		#render message 
+		text = self.font.render(message, False, self.black)
+		center = (self.width) / 2 - (text.get_width() / 2)
+		top = (self.height) - (text.get_height() + 10)
+		self.screen.blit(text,(int(center), int(top)))
+		self.updateScreen()
+
+		running = True
+		#endless loop waiting for any key
+		while running:
+			#check if exit button is pressed
+			try:
+				events = pygame.event.get()
+				for event in events:
+					if event.type == pygame.QUIT:
+						pygame.quit()
+						quit()
+					elif event.type == pygame.KEYUP:
+						running = False
+			except pygame.error as error:
+				pass
 
 	def updateScreen(self):
 		pygame.display.update()

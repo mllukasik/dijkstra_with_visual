@@ -1,5 +1,5 @@
 from screen import Screen
-import math
+from hero import Hero
 from time import time 
 
 def getShortest(costs, processed):
@@ -19,7 +19,6 @@ infinity = float("inf")
 
 #start
 screen = Screen()
-screen.drawBackground()
 
 #random houses
 returned = screen.randomHouses(10)
@@ -30,13 +29,15 @@ distances = returned[1]
 start = houses[0]
 meta = houses[-1]
 
-#draw all houses
+screen.drawBackground()
+screen.drawAllTraces()
 screen.drawHouses(houses)
+screen.showAndWait("Houses was generate, any key to continue")
+screen.updateScreen()
 
 #algorithms implementations
 #processed
 processed = []
-
 #create parents set
 parents = {}
 #create costs set
@@ -55,7 +56,7 @@ costs["1"] = distances["0"]["1"]
 costs["2"] = distances["0"]["2"]
 parents["2"] = 0
 
-processed.append("0")
+#processed.append("0")
 
 node = getShortest(costs, processed)
 while node != None:
@@ -81,8 +82,8 @@ trace.append(0)
 #reverse and print trace
 trace.reverse()
 
-#create hero
-hero = [houses[0][0], houses[0][1]]
+#create hero on postion house[0]
+hero = Hero(houses[0][0], houses[0][1])
 screen.drawHero(hero)
 screen.updateScreen()
 
@@ -91,14 +92,11 @@ screen.updateScreen()
 running = True
 while running:
 	if len(trace) > 0:
-		if screen.calcDistance(hero,houses[int(trace[0])]) < 10:
+		if screen.calcDistance((hero.x, hero.y),houses[int(trace[0])]) < 10:
 			del trace[0]
 	if len(trace) > 0:
-			length=math.sqrt(math.pow(hero[0] - houses[int(trace[0])][0],2)+math.pow(hero[1] - houses[int(trace[0])][1],2))
-			velocityX = (houses[int(trace[0])][0] - hero[0]) / length * 10
-			velocityY = (houses[int(trace[0])][1] - hero[1]) / length * 10
-			hero[0] +=  int(velocityX) 
-			hero[1] +=  int(velocityY)
+		house = houses[int(trace[0])]
+		hero.moveTo(house[0],house[1],10)
 	
 	screen.drawBackground()
 	screen.drawAllTraces()
