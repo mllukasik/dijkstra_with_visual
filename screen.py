@@ -2,7 +2,6 @@ import pygame
 import math
 from random import randint  
 
-
 class Screen():
 	def __init__(self):
 		#global variable
@@ -24,6 +23,7 @@ class Screen():
 		#traceList
 		self.tracesList = []
 
+	#draw background color with border
 	def drawBackground(self):
 		self.screen.fill(self.white)
 
@@ -35,10 +35,22 @@ class Screen():
 
 		pygame.draw.lines(self.screen, self.black, True, backgroudPoints, 5)
 
+	#draw hero on heros position
 	def drawHero(self, hero):
 		pygame.draw.circle(self.screen, self.orange, hero, 7)
 
-	def drawHouse(self, x, y):
+	#draw all houses. First and last have difrent color
+	def drawHouses(self, houses):
+		#first
+		self.cDrawHouse(houses[0][0], houses[0][1], self.green, 0)
+		
+		#from second to one before last
+		for i in range(1, len(houses) - 1):
+			self.drawHouse(houses[i][0], houses[i][1], i)
+		#last
+		self.cDrawHouse(houses[len(houses) - 1][0], houses[len(houses) - 1][1], self.green, len(houses) - 1)
+
+	def drawHouse(self, x, y, number):
 		color = self.black
 		#draw roof
 		pygame.draw.rect(self.screen, color, (x - 30, y - 25, 60, 15))
@@ -47,6 +59,9 @@ class Screen():
 		
 		#draw house
 		pygame.draw.rect(self.screen, color, (x - 30, y - 12, 60, 35))
+
+		#render house number
+		self.screen.blit(self.font.render(str(number), False, self.orange),(x - int(self.fontSize / 5),y - int(self.fontSize / 5)))
 
 	def cDrawHouse(self, x, y, color, number):
 		#draw roof
@@ -59,6 +74,10 @@ class Screen():
 
 		#render house number
 		self.screen.blit(self.font.render(str(number), False, self.orange),(x - int(self.fontSize / 5),y - int(self.fontSize / 5)))
+
+	def drawAllTraces(self):
+		for trace in self.tracesList:
+			self.drawTrace(trace)
 
 	def drawTrace(self, houses):
 		#random color
@@ -117,21 +136,18 @@ class Screen():
 				#set distance to house[0] from house[1]
 				distances["1"]["0"] = self.calcDistance(houses[1], houses[0])
 
-		#draw all houses
-		for i,house in enumerate(houses):
-			self.drawHouse(house[0], house[1])
-			#render house number
-			self.screen.blit(self.font.render(str(i), False, self.orange),(house[0] - int(self.fontSize / 5),house[1] - int(self.fontSize / 5)))
-
 		return [houses, distances]
 
 	def updateScreen(self):
 		pygame.display.update()
 
 	def isExit(self):
-		events = pygame.event.get()
-		for event in events:
-			if event.type == pygame.QUIT:
-				pygame.quit()
-				return True
+		try:
+			events = pygame.event.get()
+			for event in events:
+				if event.type == pygame.QUIT:
+					pygame.quit()
+					return True
+		except pygame.error as error:
+			return False
 		return False

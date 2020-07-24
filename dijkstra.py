@@ -1,6 +1,6 @@
 from screen import Screen
 import math
-from time import sleep 
+from time import time 
 
 def getShortest(costs, processed):
 	min = infinity
@@ -30,9 +30,8 @@ distances = returned[1]
 start = houses[0]
 meta = houses[-1]
 
-#color first and last house
-screen.cDrawHouse(start[0],start[1], screen.green, 0)
-screen.cDrawHouse(meta[0], meta[1], screen.red, len(houses)-1)
+#draw all houses
+screen.drawHouses(houses)
 
 #algorithms implementations
 #processed
@@ -100,19 +99,15 @@ while running:
 			velocityY = (houses[int(trace[0])][1] - hero[1]) / length * 10
 			hero[0] +=  int(velocityX) 
 			hero[1] +=  int(velocityY)
-	screen.drawBackground()
 	
-	for traceHouse in screen.tracesList:
-		screen.drawTrace(traceHouse)
-
-	for i in range(1,len(houses) - 1):
-		screen.drawHouse(houses[i][0], houses[i][1])
-		screen.screen.blit(screen.font.render(str(i), False, screen.orange),(houses[i][0] - int(screen.fontSize / 5),houses[i][1] - int(screen.fontSize / 5)))
-
-	screen.cDrawHouse(start[0],start[1], screen.green, 0)
-	screen.cDrawHouse(meta[0], meta[1], screen.red, len(houses) - 1)
+	screen.drawBackground()
+	screen.drawAllTraces()
+	screen.drawHouses(houses)
 	screen.drawHero(hero)
-	sleep(0.02)
 	screen.updateScreen()
-	if screen.isExit():
-		running = False
+	
+	#sleep for x time but still checking, if exit button is pressed
+	startTime = time()
+	while time() - startTime < 0.025:
+		if screen.isExit():
+			running = False
