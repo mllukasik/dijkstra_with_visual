@@ -23,6 +23,7 @@ class Screen():
 		#traceList
 		self.tracesList = []
 		self.tracesColor = {}
+		self.housesColor = {}
 
 	#draw background color with border
 	def drawBackground(self):
@@ -50,6 +51,23 @@ class Screen():
 			self.drawHouse(houses[i][0], houses[i][1], i)
 		#last
 		self.cDrawHouse(houses[len(houses) - 1][0], houses[len(houses) - 1][1], self.red, len(houses) - 1)
+
+	#draw all houses. First and last have difrent color
+	def drawHousesWithCosts(self, houses, costs):
+		#first
+		self.cDrawHouse(houses[0][0], houses[0][1], self.green, costs["0"])
+		
+		#from second to one before last
+		for i in range(1, len(houses) - 1):
+			cost = costs[str(i)]		
+			if cost != float("inf"):
+				cost = int(cost)
+			self.drawHouse(houses[i][0], houses[i][1], cost)
+		#last
+		cost = costs[str(len(houses) - 1)]
+		if cost != float("inf"):
+			cost = int(cost)
+		self.cDrawHouse(houses[len(houses) - 1][0], houses[len(houses) - 1][1], self.red, cost)
 
 	def drawHouse(self, x, y, number):
 		color = self.black
@@ -88,7 +106,6 @@ class Screen():
 
 	def drawTrace(self, houses):
 		size = 7
-
 		#create new trace if not in traceList
 		if houses not in self.tracesList:
 			#random color
@@ -179,6 +196,12 @@ class Screen():
 
 	def updateScreen(self):
 		pygame.display.update()
+
+	def renderCosts(self, houses, costs):
+		self.drawBackground()
+		self.drawAllTraces()
+		self.drawHousesWithCosts(houses, costs)
+		self.updateScreen()
 
 	def isExit(self):
 		try:

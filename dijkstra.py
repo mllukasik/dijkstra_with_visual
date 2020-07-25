@@ -1,6 +1,7 @@
 from screen import Screen
 from hero import Hero
 from time import time 
+from time import sleep 
 
 def getShortest(costs, processed):
 	min = infinity
@@ -65,6 +66,8 @@ while node != None:
 		if new_cost < costs[key]:
 			costs[key] = new_cost
 			parents[key] = node
+			screen.renderCosts(houses, costs)
+			sleep(0.5)	
 		processed.append(node)
 	node = getShortest(costs, processed)
 
@@ -100,7 +103,7 @@ while running:
 	
 	screen.drawBackground()
 	screen.drawAllTraces()
-	screen.drawHouses(houses)
+	screen.drawHousesWithCosts(houses, costs)
 	screen.drawHero(hero)
 	screen.updateScreen()
 	
