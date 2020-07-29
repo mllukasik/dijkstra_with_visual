@@ -1,5 +1,6 @@
 import pygame
 import math
+from time import time 
 from random import randint  
 
 class Screen():
@@ -11,15 +12,16 @@ class Screen():
 		#colors
 		self.white = pygame.Color(255, 255, 255)
 		self.black = pygame.Color(0, 0, 0)
-		self.red = pygame.Color(138, 14, 11)
-		self.green = pygame.Color(13, 69, 50)
+		self.green = pygame.Color(13, 225, 50)
 		self.orange = pygame.Color(255, 106, 0)
 		#screen
-		self.screen = pygame.display.set_mode((self.width, self.height))
+		self.screen = pygame.display.set_mode((self.width, self.height + 100))#extend height to display info Text under board
 		#font
 		pygame.font.init() 
 		self.fontSize = 35
 		self.font = pygame.font.SysFont("Ubuntu Mono", self.fontSize)
+		#info
+		self.infoText = None
 		#traceList
 		self.tracesList = []
 		self.tracesColor = {}
@@ -41,36 +43,25 @@ class Screen():
 	def drawHero(self, hero):
 		pygame.draw.circle(self.screen, self.orange, (hero.x,hero.y), 7)
 
-	#draw all houses. First and last have difrent color
+	#draw all houses with their number
 	def drawHouses(self, houses):
-		#first
-		self.cDrawHouse(houses[0][0], houses[0][1], self.green, 0)
-		
-		#from second to one before last
-		for i in range(1, len(houses) - 1):
+		for i in range(len(houses)):
 			self.drawHouse(houses[i][0], houses[i][1], i)
-		#last
-		self.cDrawHouse(houses[len(houses) - 1][0], houses[len(houses) - 1][1], self.red, len(houses) - 1)
 
-	#draw all houses. First and last have difrent color
+	#draw all houses with their cost
 	def drawHousesWithCosts(self, houses, costs):
-		#first
-		self.cDrawHouse(houses[0][0], houses[0][1], self.green, costs["0"])
-		
-		#from second to one before last
-		for i in range(1, len(houses) - 1):
+		for i in range(len(houses)):
 			cost = costs[str(i)]		
 			if cost != float("inf"):
 				cost = int(cost)
 			self.drawHouse(houses[i][0], houses[i][1], cost)
-		#last
-		cost = costs[str(len(houses) - 1)]
-		if cost != float("inf"):
-			cost = int(cost)
-		self.cDrawHouse(houses[len(houses) - 1][0], houses[len(houses) - 1][1], self.red, cost)
 
 	def drawHouse(self, x, y, number):
-		color = self.black
+		if str([x,y]) not in self.housesColor:
+			color = pygame.Color(randint(0, 225), randint(0, 225), randint(0, 225));
+			self.housesColor[str([x,y])] = color
+		else:
+		 	color = self.housesColor[str([x,y])]
 		#draw roof
 		pygame.draw.rect(self.screen, color, (x - 30, y - 25, 60, 15))
 		pygame.draw.polygon(self.screen, color, [(x - 40, y - 10), (x - 30, y - 10), (x - 30, y - 25)])
@@ -85,37 +76,30 @@ class Screen():
 		top = y - (text.get_height() / 2)
 		self.screen.blit(text,(int(center), int(top)))
 
-	def cDrawHouse(self, x, y, color, number):
-		#draw roof
-		pygame.draw.rect(self.screen, color, (x - 30, y - 25, 60, 15))
-		pygame.draw.polygon(self.screen, color, [(x - 40, y - 10), (x - 30, y - 10), (x - 30, y - 25)])
-		pygame.draw.polygon(self.screen, color, [(x + 40, y - 10), (x + 30, y - 10), (x + 30, y - 25)])
-		
-		#draw house
-		pygame.draw.rect(self.screen, color, (x - 30, y - 12, 60, 35))
+	def setHouseColorLikeParentColor(self, house, parent):
+		color = self.housesColor[str(parent)]
+		self.housesColor[str(house)] = color
 
-		#render house number
-		text = self.font.render(str(number), False, self.orange)
-		center = x - (text.get_width() / 2)
-		top = y - (text.get_height() / 2)
-		self.screen.blit(text,(int(center), int(top)))
-
+	def setTrace(self, houses):
+		self.tracesColor[str(self.tracesList.index(houses))] = self.green
+	
 	def drawAllTraces(self):
 		for trace in self.tracesList:
 			self.drawTrace(trace)
 
 	def drawTrace(self, houses):
-		size = 7
+		size = 7 #draw size
+
 		#create new trace if not in traceList
 		if houses not in self.tracesList:
-			#random color
-			color = pygame.Color(randint(75,150), randint(0,175), randint(0,200));
+			color = pygame.Color(0,0,0);
 			pygame.draw.lines(self.screen, color, False, houses, size)
-			#add new trace in list and save new color. New trace -> new color 
+			#add new trace in list and save new color. New trace index -> new color 
 			self.tracesList.append(houses)
 			self.tracesColor[str(len(self.tracesList) - 1)] = color
 		else:
 			#get color if trace already exist in list
+			#trace index -> color
 			color = self.tracesColor[str(self.tracesList.index(houses))]
 			pygame.draw.lines(self.screen, color, False, houses, size)
 
@@ -171,12 +155,60 @@ class Screen():
 
 		return [houses, distances]
 
+	#draw expandable text
+	def showText(self, message):
+		#get all words in text
+		text = message.split(' ')
+
+		#render all words
+		for i, word in enumerate(text):
+			word += ' '#append white character, which was removed by split function
+			text[i] = self.font.render(word, False, self.black) 
+		
+		drawText = []
+		drawText.append([])#add row
+		#last elem in row always is length of row
+		length = 0
+		
+		#create rows from words
+		for word in text:
+			#if text overbound
+			if length + word.get_width() > self.width * 0.9:
+				#last elem in row always is length of row
+				#put length of row in last elem of row table
+				drawText[-1].append(length)
+
+				#create new row
+				drawText.append([])
+				#append word to created row
+				drawText[-1].append(word)
+				#set lenght for new row
+				length = word.get_width()
+			else:
+				#append word to last row
+				drawText[-1].append(word)
+				#set lenght for last row
+				length += word.get_width()
+		
+		#put length of last row in last elem of row table
+		drawText[-1].append(length)
+		#draw all words on screeen
+		top = int(self.height * 0.95)#margin to bottom border 5%
+		for row in drawText:
+			#create center point to draw text in center of screen
+			start = int((self.width / 2) - (row[-1] / 2))			
+			
+			for word in row[:-1]:#skip last elem, is lenght of row
+				#draw word
+				self.screen.blit(word,(start,top))
+				
+				#add to start word width
+				start += int(word.get_width())
+			top += row[-2].get_height() #add to top height of last word in row
+
 	def showAndWait(self, message):
 		#render message 
-		text = self.font.render(message, False, self.black)
-		center = (self.width) / 2 - (text.get_width() / 2)
-		top = (self.height) - (text.get_height() + 10)
-		self.screen.blit(text,(int(center), int(top)))
+		self.showText(message)
 		self.updateScreen()
 
 		running = True
@@ -201,7 +233,9 @@ class Screen():
 		self.drawBackground()
 		self.drawAllTraces()
 		self.drawHousesWithCosts(houses, costs)
-		self.updateScreen()
+
+		if self.infoText != None:
+			self.showText(self.infoText)
 
 	def isExit(self):
 		try:
@@ -213,3 +247,10 @@ class Screen():
 		except pygame.error as error:
 			return False
 		return False
+
+	#sleep for x time but still checking, if exit button is pressed
+	def sleep(self, x):
+		startTime = time()
+		while time() - startTime < x:
+			if self.isExit():
+				exit()
